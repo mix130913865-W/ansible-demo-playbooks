@@ -1,64 +1,63 @@
 ---
-- name: Safe AWS EC2 setup with key pair
-  hosts: localhost
-  gather_facts: false
-  vars:
-    key_name: sample
-    instance_name: vpro-web01
-    region: us-east-1
-    ami_id: ami-068c0051b15cdb816
+- name: Safe AWS EC2 setup with key pair    # Playbook 名稱，說明作用
+  hosts: localhost                          # 只在本地主機執行
+  gather_facts: false                        # 不收集本地主機資訊，因為只操作 AWS
+  vars:                                       # 定義變數
+    key_name: sample                          # 指定 AWS key pair 名稱
+    instance_name: vpro-web01                 # EC2 instance名稱
+    region: us-east-1                         # AWS 區域
+    ami_id: ami-068c0051b15cdb816            # EC2 AMI ID
 
-  tasks:
+  tasks:                                      # 開始任務清單
 
-    # -----------------------------
-    # 1️⃣ 檢查 key pair 是否存在
-    # -----------------------------
-    - name: Check if key pair exists
-      amazon.aws.ec2_key_info:
-        names:
-          - "{{ key_name }}"
-        region: "{{ region }}"
-      register: existing_keys
+    # =========================================================
+    # 檢查 key pair 是否存在
+    # =========================================================
+    - name: Check if key pair exists           # 任務名稱
+      amazon.aws.ec2_key_info:                 # 使用 ec2_key_info 模組查詢 key pair
+        names:                                 # 要查詢的 key pair 名稱清單
+          - "{{ key_name }}"                   # 使用上面定義的變數
+        region: "{{ region }}"                 # 查詢的 AWS 區域
+      register: existing_keys                  # 將結果存入 existing_keys 變數
 
-    - name: Debug existing_keys
-      debug:
-        var: existing_keys
+    - name: Debug existing_keys                 # 顯示查詢結果，方便檢查
+      debug:                                   # 使用 debug 模組
+        var: existing_keys                     # 顯示 existing_keys 變數內容
 
-    # -----------------------------
-    # 2️⃣ 如果 key 不存在，才建立新的 key pair
-    # -----------------------------
-    - name: Create EC2 key pair only if it does not exist
-      amazon.aws.ec2_key:
-        name: "{{ key_name }}"
-        region: "{{ region }}"
-      register: keyout
-      when: (existing_keys.get('keys', []) | length) == 0
+    # =========================================================
+    # 建立 key pair（只在 AWS 上不存在時）
+    # =========================================================
+    - name: Create EC2 key pair only if it does not exist  # 任務名稱
+      amazon.aws.ec2_key:                       # 使用 ec2_key 模組建立 key pair
+        name: "{{ key_name }}"                  # key pair 名稱
+        region: "{{ region }}"                  # AWS 區域
+      register: keyout                          # 將新建結果存入 keyout
+      when: (existing_keys.get('keypairs', []) | length) == 0  # 只有 key 不存在才執行
 
-    # -----------------------------
-    # 3️⃣ 保存私鑰（只在第一次建立 key 時）
-    # -----------------------------
-    - name: Save private key content
-      copy:
-        content: "{{ keyout.key.key_material }}"
-        dest: "./{{ key_name }}.pem"
-        mode: '0600'
-      when:
-        - keyout is defined
-        - keyout.changed
-        - keyout.key.key_material is defined
+    # =========================================================
+    # 保存私鑰到本地檔案（只在第一次建立 key 時）
+    # =========================================================
+    - name: Save private key content            # 任務名稱
+      copy:                                    # 使用 copy 模組寫入檔案
+        content: "{{ keyout.key.key_material }}"  # 私鑰內容
+        dest: "./{{ key_name }}.pem"           # 儲存路徑和檔名
+        mode: '0600'                           # 設定檔案權限
+      when:                                     # 執行條件
+        - keyout is defined                     # keyout 變數已定義
+        - keyout.changed                        # 確保是第一次建立 key
+        - keyout.key.key_material is defined    # 確保 key_material 存在
 
-    # -----------------------------
-    # 4️⃣ 建立 EC2 實例
-    # -----------------------------
-    - name: Launch EC2 instance
-      amazon.aws.ec2_instance:
-        key_name: "{{ key_name }}"
-        instance_type: t3.micro
-        image_id: "{{ ami_id }}"
-        wait: yes
-        count: 1
-        name: "{{ instance_name }}"
-        tags:
-          project: vprofile
-        region: "{{ region }}"
-
+    # =========================================================
+    # 建立 EC2 instance
+    # =========================================================
+    - name: Launch EC2 instance                 # 任務名稱
+      amazon.aws.ec2_instance:                  # 使用 ec2_instance 模組建立 EC2
+        key_name: "{{ key_name }}"             # 指定使用的 key pair
+        instance_type: t3.micro                # EC2 類型
+        image_id: "{{ ami_id }}"               # 指定 AMI
+        wait: yes                               # 等待 EC2 啟動完成
+        count: 1                                # 建立一台 EC2
+        name: "{{ instance_name }}"            # 設定 EC2 名稱
+        tags:                                   # 設定 EC2 標籤
+          project: vprofile                     # 標籤 project
+        region: "{{ region }}"                  # AWS 區域
