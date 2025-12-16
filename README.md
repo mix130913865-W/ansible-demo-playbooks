@@ -14,9 +14,9 @@
 - **安全保存私鑰**  
   設定檔案權限為 `600`，確保只有擁有者可讀寫。  
 
-- **建立 EC2 實例**  
-  - 指定 AMI、實例類型、名稱與標籤  
-  - 等待實例啟動完成  
+- **建立 EC2 instance**  
+  - 指定 AMI、instance類型、名稱與標籤  
+  - 等待instance啟動完成  
 
 ---
 
@@ -35,7 +35,7 @@
   - Playbook 變數
 
 ### role – Role 化
-- 將 Exercise 13 的內容轉為 `post-install` Role  
+- 將 playbook directory 的內容轉為 `post-install` Role  
 - 封裝安裝、配置、模板部署、服務管理、資料夾建立等任務  
 - 使用 **角色結構**：
   - `defaults`、`vars`、`tasks`、`handlers`、`templates`、`files`  
