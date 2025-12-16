@@ -35,6 +35,36 @@
   - Playbook 變數
 
 ### role – Role 化
+roles/
+└── post-install/                # Role 名稱
+    ├── defaults/                # 預設變數（最低優先權）
+    │   └── main.yml
+    │
+    ├── vars/                    # 角色變數（較高優先權）
+    │   └── main.yml
+    │
+    ├── tasks/                   # 主要任務定義
+    │   └── main.yml
+    │
+    ├── handlers/                # 被 notify 觸發的任務（重啟服務等）
+    │   └── main.yml
+    │
+    ├── templates/               # Jinja2 模板（.j2）
+    │   ├── ntpconf_centos.j2
+    │   └── ntpconf_ubuntu.j2
+    │
+    ├── files/                   # 靜態檔案（直接複製）
+    │   └── myfile.txt
+    │
+    ├── meta/                    # 角色中繼資料（Galaxy / 相依性）
+    │   └── main.yml
+    │
+    ├── tests/                   # Role 測試用
+    │   ├── inventory
+    │   └── test.yml
+    │
+    └── README.md                # Role 說明文件
+
 - 將 playbook directory 的內容轉為 `post-install` Role  
 - 封裝安裝、配置、模板部署、服務管理、資料夾建立等任務  
 - 使用 **角色結構**：
